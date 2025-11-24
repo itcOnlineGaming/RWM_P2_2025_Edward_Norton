@@ -1,6 +1,8 @@
 <script lang="ts">
     // Main container component - Feature #1: Stress Bubble Graph
   import { onMount } from 'svelte';
+  import AddStressorButton from './AddStressorButton.svelte';
+  import type { Stressor, StressData } from '../types';
   
   // Props
   export let userId: string | null = null; // For authenticated users
@@ -62,7 +64,31 @@
       console.error('Failed to save stress data:', error);
     }
   }
+  
+  function handleAddStressor(event: CustomEvent<Omit<Stressor, 'id' | 'createdAt'>>) {
+    const newStressor: Stressor = {
+      ...event.detail,
+      id: crypto.randomUUID(),
+      createdAt: Date.now()
+    };
     
+    // Add to current date
+    if (!stressData[currentDate]) {
+      stressData[currentDate] = [];
+    }
+    stressData[currentDate] = [...stressData[currentDate], newStressor];
+    
+    saveStressData();
+    showAddModal = false;
+  }
+  
+  function openAddModal() {
+    showAddModal = true;
+  }
+  
+  function closeAddModal() {
+    showAddModal = false;
+  }
 </script>
 
 <div class="stress-bubble-graph">
@@ -92,6 +118,7 @@
         <div class="empty-state">
           <h2>No stressors tracked yet</h2>
           <p>It's important to stay mindful, let's track your stress</p>
+          <p>Press the (+) in the bottom right to begin</p>
         </div>
       {:else}
         <div class="bubbles-container">
@@ -103,6 +130,15 @@
         </div>
       {/if}
     </div>
+
+  <!-- Add Button (FAB) -->
+  <AddStressorButton on:click={openAddModal} />
+  
+  <!-- Add Stressor Modal -->
+  {#if showAddModal}
+
+  {/if}
+
   </div>
 </div>
 
