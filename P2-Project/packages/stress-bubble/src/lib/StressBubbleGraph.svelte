@@ -2,6 +2,7 @@
     // Main container component - Feature #1: Stress Bubble Graph
   import { onMount } from 'svelte';
   import AddStressorButton from './AddStressorButton.svelte';
+  import AddStressorModal from './AddStressorModal.svelte';
   import type { Stressor, StressData } from '../types';
   
   // Props
@@ -136,7 +137,10 @@
   
   <!-- Add Stressor Modal -->
   {#if showAddModal}
-
+    <AddStressorModal 
+      on:submit={handleAddStressor}
+      on:cancel={closeAddModal}
+    />
   {/if}
 
   </div>
