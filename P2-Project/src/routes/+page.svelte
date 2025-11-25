@@ -1,7 +1,7 @@
 <script lang="ts">
   import StressBubbleGraph from 'stress-bubble';
   
-  // Simulated user ID (in real app, get from auth)
+  // Simulated user ID
   let userId: string | null = 'demo-user-123';
 </script>
 

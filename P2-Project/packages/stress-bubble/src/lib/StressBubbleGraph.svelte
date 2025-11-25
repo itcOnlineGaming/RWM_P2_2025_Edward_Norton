@@ -3,6 +3,7 @@
   import { onMount } from 'svelte';
   import AddStressorButton from './AddStressorButton.svelte';
   import AddStressorModal from './AddStressorModal.svelte';
+  import StressBubble from './StressBubble.svelte';
   import type { Stressor, StressData } from '../types';
   
   // Props
@@ -13,6 +14,7 @@
   let stressData: StressData = {};
   let currentDate: string = new Date().toISOString().split('T')[0];
   let showAddModal = false;
+  let selectedStressor: Stressor | null = null;
   let isLoading = false;
   
   // Computed
@@ -66,6 +68,7 @@
     }
   }
   
+  // Handle adding a new stressor
   function handleAddStressor(event: CustomEvent<Omit<Stressor, 'id' | 'createdAt'>>) {
     const newStressor: Stressor = {
       ...event.detail,
@@ -81,6 +84,28 @@
     
     saveStressData();
     showAddModal = false;
+  }
+
+  function handleBubbleClick(event: CustomEvent<Stressor>) {
+    selectedStressor = event.detail;
+  }
+
+  // Remove cell from bubble
+  function handleRemoveCell(event: CustomEvent<{ stressorId: string; cellIndex: number }>) {
+    const { stressorId } = event.detail;
+    const stressor = currentStressors.find(s => s.id === stressorId);
+    
+    if (!stressor) return;
+    
+    if (stressor.level === 1) {
+      // Delete entire stressor when last cell removed
+      handleDeleteStressor(stressorId);
+      return;
+    }
+    
+    // Reduce level by 1
+    const newLevel = Math.max(1, stressor.level - 1) as 1 | 2 | 3 | 4 | 5;
+    handleUpdateLevel({ detail: { id: stressorId, level: newLevel } } as CustomEvent);
   }
   
   function openAddModal() {
@@ -122,11 +147,14 @@
           <p>Press the (+) in the bottom right to begin</p>
         </div>
       {:else}
+        <!--Feature 4 and & 5, Stress Bubbles-->
         <div class="bubbles-container">
           {#each currentStressors as stressor (stressor.id)}
-            <div class="bubble-placeholder">
-              {stressor.name} (Level {stressor.level})
-            </div>
+            <StressBubble 
+              {stressor}
+              on:click={handleBubbleClick}
+              on:removeCell={handleRemoveCell}
+            />
           {/each}
         </div>
       {/if}
@@ -339,15 +367,16 @@
     align-content: flex-start;
   }
   
-  .bubble-placeholder {
-    display: inline-block;
-    padding: 12px 20px;
-    background: linear-gradient(135deg, #d97642 0%, #c85a2d 100%);
-    color: white;
-    border-radius: 50px;
-    font-size: 14px;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(217, 118, 66, 0.3);
+  .bubbles-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    align-content: flex-start;
+    padding: 20px;
   }
   
   /* Responsive */
