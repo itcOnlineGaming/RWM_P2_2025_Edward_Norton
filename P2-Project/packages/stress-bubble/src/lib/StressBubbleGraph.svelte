@@ -107,7 +107,31 @@
     const newLevel = Math.max(1, stressor.level - 1) as 1 | 2 | 3 | 4 | 5;
     handleUpdateLevel({ detail: { id: stressorId, level: newLevel } } as CustomEvent);
   }
+
+  // Update stress level
+  function handleUpdateLevel(event: CustomEvent<{ id: string; level: 1 | 2 | 3 | 4 | 5 }>) {
+    const { id, level } = event.detail;
+    
+    stressData[currentDate] = stressData[currentDate].map(s =>
+      s.id === id ? { ...s, level } : s
+    );
+    
+    saveStressData();
+    
+    // Update selected stressor if it's the one being edited
+    if (selectedStressor?.id === id) {
+      selectedStressor = { ...selectedStressor, level };
+    }
+  }
   
+  // Delete stressor
+  function handleDeleteStressor(stressorId: string) {
+    stressData[currentDate] = stressData[currentDate].filter(s => s.id !== stressorId);
+    saveStressData();
+    selectedStressor = null;
+  }
+  
+  // Show/Hide Add Modal
   function openAddModal() {
     showAddModal = true;
   }
