@@ -1,9 +1,10 @@
 <script lang="ts">
-    // Main container component - Feature #1: Stress Bubble Graph
+  // Main container component - Feature #1: Stress Bubble Graph
   import { onMount } from 'svelte';
   import AddStressorButton from './AddStressorButton.svelte';
   import AddStressorModal from './AddStressorModal.svelte';
   import StressBubble from './StressBubble.svelte';
+  import BubbleDetailModal from './BubbleDetailModal.svelte';
   import type { Stressor, StressData } from '../types';
   
   // Props
@@ -123,6 +124,22 @@
       selectedStressor = { ...selectedStressor, level };
     }
   }
+
+  // Update notes
+  function handleUpdateNotes(event: CustomEvent<{ id: string; notes?: string }>) {
+    const { id, notes } = event.detail;
+    
+    stressData[currentDate] = stressData[currentDate].map(s =>
+      s.id === id ? { ...s, notes } : s
+    );
+    
+    saveStressData();
+    
+    // Update selected stressor if it's the one being edited
+    if (selectedStressor?.id === id) {
+      selectedStressor = { ...selectedStressor, notes };
+    }
+  }
   
   // Delete stressor
   function handleDeleteStressor(stressorId: string) {
@@ -138,6 +155,11 @@
   
   function closeAddModal() {
     showAddModal = false;
+  }
+
+  // Close Detail Modal
+  function closeDetailModal() {
+    selectedStressor = null;
   }
 </script>
 
@@ -184,14 +206,25 @@
       {/if}
     </div>
 
-  <!-- Add Button (FAB) -->
+  <!-- Feature 3: Add Button (FAB) -->
   <AddStressorButton on:click={openAddModal} />
   
-  <!-- Add Stressor Modal -->
+  <!-- Feature 4: Add Stressor Modal -->
   {#if showAddModal}
     <AddStressorModal 
       on:submit={handleAddStressor}
       on:cancel={closeAddModal}
+    />
+  {/if}
+
+  <!-- Feature #6: Bubble Detail Modal -->
+  {#if selectedStressor}
+    <BubbleDetailModal 
+      stressor={selectedStressor}
+      on:updateLevel={handleUpdateLevel}
+      on:updateNotes={handleUpdateNotes}
+      on:delete={(e) => handleDeleteStressor(e.detail)}
+      on:close={closeDetailModal}
     />
   {/if}
 
