@@ -2,7 +2,7 @@
   // Feature #6: Bubble Detail/Edit Modal
   import { createEventDispatcher } from 'svelte';
   import { fade, scale } from 'svelte/transition';
-  import type { Stressor } from '../types';
+  import type { Stressor } from '../types.ts';
   
   const dispatch = createEventDispatcher();
   

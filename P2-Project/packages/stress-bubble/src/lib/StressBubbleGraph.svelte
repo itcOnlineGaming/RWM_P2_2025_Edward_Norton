@@ -1,22 +1,35 @@
 <script lang="ts">
   // Main container component - Feature #1: Stress Bubble Graph
+  // Feature #7: Compact Timeline Navigation (Top-Right)
   import { onMount } from 'svelte';
+  import { stressData as stressDataStore, currentDate as currentDateStore, stressActions } from './stores/stressStore.ts';
   import AddStressorButton from './AddStressorButton.svelte';
   import AddStressorModal from './AddStressorModal.svelte';
   import StressBubble from './StressBubble.svelte';
   import BubbleDetailModal from './BubbleDetailModal.svelte';
-  import type { Stressor, StressData } from '../types';
+  import Timeline from './Timeline.svelte';
+  import type { Stressor, StressData } from '../types.ts';
   
   // Props
   export let userId: string | null = null; // For authenticated users
   export let apiEndpoint: string = '/api/stress-data'; // For data persistence
   
   // State
-  let stressData: StressData = {};
-  let currentDate: string = new Date().toISOString().split('T')[0];
   let showAddModal = false;
   let selectedStressor: Stressor | null = null;
   let isLoading = false;
+  
+  // Subscribe to stores
+  let stressData: StressData;
+  let currentDate: string;
+  
+  stressDataStore.subscribe(value => {
+    stressData = value;
+  });
+  
+  currentDateStore.subscribe(value => {
+    currentDate = value;
+  });
   
   // Computed
   $: currentStressors = stressData[currentDate] || [];
@@ -31,7 +44,7 @@
       // Load from localStorage for non-authenticated users
       const stored = localStorage.getItem('stress-bubble-data');
       if (stored) {
-        stressData = JSON.parse(stored);
+        stressActions.loadData(JSON.parse(stored));
       }
       return;
     }
@@ -41,7 +54,8 @@
     try {
       const response = await fetch(`${apiEndpoint}?userId=${userId}`);
       if (response.ok) {
-        stressData = await response.json();
+        const data = await response.json();
+        stressActions.loadData(data);
       }
     } catch (error) {
       console.error('Failed to load stress data:', error);
@@ -77,18 +91,18 @@
       createdAt: Date.now()
     };
     
-    // Add to current date
-    if (!stressData[currentDate]) {
-      stressData[currentDate] = [];
-    }
-    stressData[currentDate] = [...stressData[currentDate], newStressor];
-    
+    stressActions.addStressor(currentDate, newStressor);
     saveStressData();
     showAddModal = false;
   }
 
   function handleBubbleClick(event: CustomEvent<Stressor>) {
     selectedStressor = event.detail;
+  }
+
+  // Feature #7: Timeline date change
+  function handleDateChange(event: CustomEvent<string>) {
+    stressActions.setDate(event.detail);
   }
 
   // Remove cell from bubble
@@ -113,10 +127,7 @@
   function handleUpdateLevel(event: CustomEvent<{ id: string; level: 1 | 2 | 3 | 4 | 5 }>) {
     const { id, level } = event.detail;
     
-    stressData[currentDate] = stressData[currentDate].map(s =>
-      s.id === id ? { ...s, level } : s
-    );
-    
+    stressActions.updateStressor(currentDate, id, { level });
     saveStressData();
     
     // Update selected stressor if it's the one being edited
@@ -129,10 +140,7 @@
   function handleUpdateNotes(event: CustomEvent<{ id: string; notes?: string }>) {
     const { id, notes } = event.detail;
     
-    stressData[currentDate] = stressData[currentDate].map(s =>
-      s.id === id ? { ...s, notes } : s
-    );
-    
+    stressActions.updateStressor(currentDate, id, { notes });
     saveStressData();
     
     // Update selected stressor if it's the one being edited
@@ -143,7 +151,7 @@
   
   // Delete stressor
   function handleDeleteStressor(stressorId: string) {
-    stressData[currentDate] = stressData[currentDate].filter(s => s.id !== stressorId);
+    stressActions.deleteStressor(currentDate, stressorId);
     saveStressData();
     selectedStressor = null;
   }
@@ -172,15 +180,15 @@
   
   <!-- Main Container -->
   <div class="main-container">
-    <!-- Timeline -->
-    <div class="timeline">
-      <span class="date-display">
-        {currentDate === new Date().toISOString().split('T')[0] ? 'Today' : currentDate}
-      </span>
-    </div>
-    
-    <!-- Graph Container -->
+    <!-- Graph Container (Timeline is positioned absolute inside) -->
     <div class="graph-container">
+      <!-- Feature #7: Compact Timeline (Top-Right) -->
+      <Timeline 
+        currentDate={currentDate}
+        stressData={stressData}
+        on:dateChange={handleDateChange}
+      />
+      
       {#if isLoading}
         <div class="loading-state">
           <div class="spinner"></div>
@@ -206,28 +214,27 @@
       {/if}
     </div>
 
-  <!-- Feature 3: Add Button (FAB) -->
-  <AddStressorButton on:click={openAddModal} />
-  
-  <!-- Feature 4: Add Stressor Modal -->
-  {#if showAddModal}
-    <AddStressorModal 
-      on:submit={handleAddStressor}
-      on:cancel={closeAddModal}
-    />
-  {/if}
+    <!-- Feature 3: Add Button (FAB) -->
+    <AddStressorButton on:click={openAddModal} />
+    
+    <!-- Feature 4: Add Stressor Modal -->
+    {#if showAddModal}
+      <AddStressorModal 
+        on:submit={handleAddStressor}
+        on:cancel={closeAddModal}
+      />
+    {/if}
 
-  <!-- Feature #6: Bubble Detail Modal -->
-  {#if selectedStressor}
-    <BubbleDetailModal 
-      stressor={selectedStressor}
-      on:updateLevel={handleUpdateLevel}
-      on:updateNotes={handleUpdateNotes}
-      on:delete={(e) => handleDeleteStressor(e.detail)}
-      on:close={closeDetailModal}
-    />
-  {/if}
-
+    <!-- Feature #6: Bubble Detail Modal -->
+    {#if selectedStressor}
+      <BubbleDetailModal 
+        stressor={selectedStressor}
+        on:updateLevel={handleUpdateLevel}
+        on:updateNotes={handleUpdateNotes}
+        on:delete={(e) => handleDeleteStressor(e.detail)}
+        on:close={closeDetailModal}
+      />
+    {/if}
   </div>
 </div>
 
@@ -267,35 +274,20 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    max-width: 640px;
+    max-width: 1200px;
     width: 100%;
     margin: 0 auto;
     padding: 0 20px 20px;
   }
   
-  /* Timeline */
-  .timeline {
-    padding: 16px;
-    background: rgba(255, 255, 255, 0.6);
-    border-radius: 12px 12px 0 0;
-    text-align: center;
-    backdrop-filter: blur(10px);
-  }
-  
-  .date-display {
-    font-weight: 600;
-    font-size: 16px;
-    color: #2c2c2c;
-  }
-  
-  /* Graph Container */
+  /* Graph Container (with relative positioning for absolute timeline) */
   .graph-container {
-    flex: 1;
     position: relative;
+    flex: 1;
     background: rgba(255, 255, 255, 0.8);
-    border-radius: 0 0 20px 20px;
+    border-radius: 20px;
     padding: 40px 20px;
-    min-height: 400px;
+    min-height: 500px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   }
   
@@ -308,70 +300,6 @@
     text-align: center;
     width: 90%;
     max-width: 400px;
-  }
-  
-  .illustration {
-    position: relative;
-    width: 100%;
-    height: 200px;
-    margin-bottom: 30px;
-    background: linear-gradient(180deg, #d97642 0%, #c85a2d 100%);
-    border-radius: 20px;
-    overflow: hidden;
-  }
-  
-  .sun {
-    position: absolute;
-    bottom: 40%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px;
-    height: 80px;
-    background: #ffd89b;
-    border-radius: 50%;
-    box-shadow: 0 0 40px rgba(255, 216, 155, 0.6);
-  }
-  
-  .waves {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 45%;
-    background: #5b9dd6;
-  }
-  
-  .wave {
-    position: absolute;
-    bottom: 0;
-    left: -100%;
-    width: 300%;
-    height: 100%;
-    background: rgba(91, 157, 214, 0.4);
-    border-radius: 50%;
-    animation: wave 8s infinite linear;
-  }
-  
-  .wave:nth-child(2) {
-    animation-delay: -2s;
-    opacity: 0.7;
-  }
-  
-  .wave:nth-child(3) {
-    animation-delay: -4s;
-    opacity: 0.5;
-  }
-  
-  @keyframes wave {
-    0% {
-      transform: translateX(0) translateY(0);
-    }
-    50% {
-      transform: translateX(25%) translateY(-10px);
-    }
-    100% {
-      transform: translateX(50%) translateY(0);
-    }
   }
   
   .empty-state h2 {
@@ -416,24 +344,12 @@
   .bubbles-container {
     width: 100%;
     height: 100%;
-    position: relative;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
-    align-content: flex-start;
-  }
-  
-  .bubbles-container {
-    width: 100%;
-    height: 100%;
-    position: relative;
+    padding-top: 60px; /* Space for timeline at top */
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
     justify-content: center;
     align-content: flex-start;
-    padding: 20px;
   }
   
   /* Responsive */
@@ -446,13 +362,12 @@
       font-size: 28px;
     }
     
-    .illustration {
-      height: 160px;
+    .graph-container {
+      padding: 32px 16px;
     }
     
-    .sun {
-      width: 60px;
-      height: 60px;
+    .bubbles-container {
+      padding-top: 70px; /* More space on mobile for timeline */
     }
   }
 </style>

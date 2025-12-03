@@ -3,7 +3,7 @@
   // Feature #5: Bubble Cells
   import { createEventDispatcher } from 'svelte';
   import { fade, scale } from 'svelte/transition';
-  import type { Stressor } from '../types';
+  import type { Stressor } from '../types.ts';
   
   const dispatch = createEventDispatcher();
   
