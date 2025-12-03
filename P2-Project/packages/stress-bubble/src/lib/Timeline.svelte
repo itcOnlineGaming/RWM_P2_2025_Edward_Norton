@@ -1,6 +1,7 @@
 <script lang="ts">
   // Feature #7: Compact Timeline Navigation (Top-Left)
   import { createEventDispatcher } from 'svelte';
+  import CalendarButton from './CalendarButton.svelte';
   
   const dispatch = createEventDispatcher();
   
@@ -8,10 +9,18 @@
   export let currentDate: string; // ISO date string (YYYY-MM-DD)
   export let stressData: Record<string, any[]> = {}; // To show indicators
   
-  // Navigation state
-  let selectedDate = new Date(currentDate);
+  // Update selectedDate when currentDate prop changes
+  $: selectedDate = new Date(currentDate);
   
+  // Format date with full display
   $: formattedDate = selectedDate.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric',
+    year: 'numeric'
+  });
+  
+  // Short date for compact display
+  $: shortDate = selectedDate.toLocaleDateString('en-US', { 
     month: 'short', 
     day: 'numeric'
   });
@@ -26,24 +35,21 @@
   function goToPreviousDay() {
     const newDate = new Date(selectedDate);
     newDate.setDate(newDate.getDate() - 1);
-    selectedDate = newDate;
-    dispatchDateChange();
+    dispatchDateChange(newDate);
   }
   
   function goToNextDay() {
     const newDate = new Date(selectedDate);
     newDate.setDate(newDate.getDate() + 1);
-    selectedDate = newDate;
-    dispatchDateChange();
+    dispatchDateChange(newDate);
   }
   
   function goToToday() {
-    selectedDate = new Date();
-    dispatchDateChange();
+    dispatchDateChange(new Date());
   }
   
-  function dispatchDateChange() {
-    const dateStr = selectedDate.toISOString().split('T')[0];
+  function dispatchDateChange(date: Date) {
+    const dateStr = date.toISOString().split('T')[0];
     dispatch('dateChange', dateStr);
   }
   
@@ -67,8 +73,7 @@
     const days = parseInt(target.value);
     const newDate = new Date();
     newDate.setDate(newDate.getDate() + days);
-    selectedDate = newDate;
-    dispatchDateChange();
+    dispatchDateChange(newDate);
   }
   
   // Get indicator level for current date
@@ -81,6 +86,18 @@
 </script>
 
 <div class="timeline-compact">
+  <!-- Currently Viewing Display -->
+  <div class="viewing-display">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="calendar-icon">
+      <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+      <path d="M3 10H21" stroke="currentColor" stroke-width="2"/>
+    </svg>
+    <span class="viewing-text">Currently viewing: <strong>{formattedDate}</strong></span>
+    {#if dataIndicator}
+      <span class="data-dot"></span>
+    {/if}
+  </div>
+  
   <div class="timeline-header">
     <div class="date-info">
       <button 
@@ -95,10 +112,7 @@
       </button>
       
       <div class="date-display">
-        <span class="date-text">{formattedDate}</span>
-        {#if dataIndicator}
-          <span class="data-dot"></span>
-        {/if}
+        <span class="date-text">{shortDate}</span>
       </div>
       
       <button 
@@ -112,6 +126,9 @@
         </svg>
       </button>
     </div>
+    
+    <!-- Task #8: Calendar Button -->
+    <CalendarButton on:click={handleOpenCalendar} />
   </div>
   
   <div class="slider-section">
@@ -139,10 +156,40 @@
     border: 2px solid #e8a87c;
     border-radius: 12px;
     padding: 12px 16px;
-    max-width: 280px;
+    min-width: 320px;
+    max-width: 320px;
     backdrop-filter: blur(10px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     z-index: 10;
+  }
+  
+  /* Currently Viewing Display */
+  .viewing-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: rgba(232, 168, 124, 0.15);
+    border-radius: 8px;
+    border-left: 3px solid #d97642;
+  }
+  
+  .calendar-icon {
+    color: #d97642;
+    flex-shrink: 0;
+  }
+  
+  .viewing-text {
+    font-size: 12px;
+    color: #5c5c5c;
+    line-height: 1.4;
+    flex: 1;
+  }
+  
+  .viewing-text strong {
+    color: #2c2c2c;
+    font-weight: 700;
   }
   
   .timeline-header {
@@ -186,9 +233,9 @@
   .date-display {
     display: flex;
     align-items: center;
-    gap: 6px;
-    flex: 1;
     justify-content: center;
+    flex: 1;
+    min-width: 72px; /* Fixed width to prevent resize */
   }
   
   .date-text {
@@ -203,6 +250,7 @@
     height: 6px;
     border-radius: 50%;
     background: #d97642;
+    flex-shrink: 0;
     animation: pulse 2s infinite;
   }
   
@@ -283,8 +331,13 @@
   
   @media (max-width: 768px) {
     .timeline-compact {
-      max-width: 240px;
+      min-width: 280px;
+      max-width: 280px;
       padding: 10px 12px;
+    }
+    
+    .viewing-text {
+      font-size: 11px;
     }
     
     .date-text {

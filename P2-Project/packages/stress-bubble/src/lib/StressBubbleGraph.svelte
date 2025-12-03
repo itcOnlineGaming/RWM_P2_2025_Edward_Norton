@@ -1,6 +1,7 @@
 <script lang="ts">
   // Main container component - Feature #1: Stress Bubble Graph
-  // Feature #7: Compact Timeline Navigation (Top-Right)
+  // Feature #7: Compact Timeline Navigation (Top-Left)
+  // Feature #8: Calendar Modal
   import { onMount } from 'svelte';
   import { stressData as stressDataStore, currentDate as currentDateStore, stressActions } from './stores/stressStore.ts';
   import AddStressorButton from './AddStressorButton.svelte';
@@ -8,6 +9,7 @@
   import StressBubble from './StressBubble.svelte';
   import BubbleDetailModal from './BubbleDetailModal.svelte';
   import Timeline from './Timeline.svelte';
+  import CalendarMonth from './CalendarMonth.svelte';
   import type { Stressor, StressData } from '../types.ts';
   
   // Props
@@ -17,6 +19,7 @@
   // State
   let showAddModal = false;
   let selectedStressor: Stressor | null = null;
+  let showCalendar = false;
   let isLoading = false;
   
   // Subscribe to stores
@@ -169,24 +172,55 @@
   function closeDetailModal() {
     selectedStressor = null;
   }
+  
+  // Feature #8: Calendar Modal
+  function openCalendar() {
+    showCalendar = true;
+  }
+  
+  function closeCalendar() {
+    showCalendar = false;
+  }
+  
+  function handleCalendarDateSelect(event: CustomEvent<string>) {
+    stressActions.setDate(event.detail);
+    closeCalendar();
+  }
+  
+  function handleClearMonth(event: CustomEvent<{ year: number; month: number }>) {
+    const { year, month } = event.detail;
+    
+    // Clear all dates in the specified month
+    const updates = { ...stressData };
+    Object.keys(updates).forEach(dateStr => {
+      const date = new Date(dateStr);
+      if (date.getFullYear() === year && date.getMonth() === month) {
+        delete updates[dateStr];
+      }
+    });
+    
+    stressDataStore.set(updates);
+    saveStressData();
+  }
 </script>
 
 <div class="stress-bubble-graph">
   <!-- Header -->
   <div class="header">
-    <h1>You seem stressed</h1>
-    <p>Track and manage your stress levels</p>
+    <h1>Stress Bubble Tracker</h1>
+    <p>Track and manage your stress levels over time</p>
   </div>
   
   <!-- Main Container -->
   <div class="main-container">
     <!-- Graph Container (Timeline is positioned absolute inside) -->
     <div class="graph-container">
-      <!-- Feature #7: Compact Timeline (Top-Right) -->
+      <!-- Feature #7: Compact Timeline (Top-Left) -->
       <Timeline 
         currentDate={currentDate}
         stressData={stressData}
         on:dateChange={handleDateChange}
+        on:openCalendar={openCalendar}
       />
       
       {#if isLoading}
@@ -197,11 +231,10 @@
       {:else if isEmpty}
         <div class="empty-state">
           <h2>No stressors tracked yet</h2>
-          <p>It's important to stay mindful, let's track your stress</p>
-          <p>Press the (+) in the bottom right to begin</p>
+          <p>Start tracking your stress levels by adding your first stressor</p>
+          <p>Click the (+) button to begin</p>
         </div>
       {:else}
-        <!--Feature 4 and & 5, Stress Bubbles-->
         <div class="bubbles-container">
           {#each currentStressors as stressor (stressor.id)}
             <StressBubble 
@@ -214,8 +247,12 @@
       {/if}
     </div>
 
-    <!-- Feature 3: Add Button (FAB) -->
-    <AddStressorButton on:click={openAddModal} />
+    <!-- Feature 3: Add Button (FAB) - Positioned relative to graph container -->
+    {#if !showAddModal && !selectedStressor && !showCalendar}
+      <div class="fab-container">
+        <AddStressorButton on:click={openAddModal} />
+      </div>
+    {/if}
     
     <!-- Feature 4: Add Stressor Modal -->
     {#if showAddModal}
@@ -235,6 +272,17 @@
         on:close={closeDetailModal}
       />
     {/if}
+    
+    <!-- Feature #8: Calendar Modal -->
+    {#if showCalendar}
+      <CalendarMonth
+        currentDate={currentDate}
+        stressData={stressData}
+        on:selectDate={handleCalendarDateSelect}
+        on:clearMonth={handleClearMonth}
+        on:close={closeCalendar}
+      />
+    {/if}
   </div>
 </div>
 
@@ -243,7 +291,7 @@
     position: relative;
     width: 100%;
     min-height: 100vh;
-    background: linear-gradient(180deg, #f5e6dc 0%, #e8d4c4 100%);
+    background: #f5e6dc;
     display: flex;
     flex-direction: column;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -277,18 +325,30 @@
     max-width: 1200px;
     width: 100%;
     margin: 0 auto;
-    padding: 0 20px 20px;
+    padding: 0 20px 40px;
+    box-sizing: border-box;
   }
   
-  /* Graph Container (with relative positioning for absolute timeline) */
+  /* Graph Container */
   .graph-container {
     position: relative;
     flex: 1;
-    background: rgba(255, 255, 255, 0.8);
+    background: #fef5ee;
+    border: 3px solid #e8a87c;
     border-radius: 20px;
     padding: 40px 20px;
     min-height: 500px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    overflow: visible;
+    margin-bottom: 20px;
+  }
+  
+  /* FAB Container */
+  .fab-container {
+    position: absolute;
+    bottom: 40px;
+    right: 40px;
+    z-index: 100;
   }
   
   /* Empty State */
@@ -312,7 +372,7 @@
   .empty-state p {
     font-size: 16px;
     color: #666;
-    margin: 0;
+    margin: 0 0 8px 0;
     line-height: 1.5;
   }
   
@@ -344,7 +404,7 @@
   .bubbles-container {
     width: 100%;
     height: 100%;
-    padding-top: 60px; /* Space for timeline at top */
+    padding: 100px 20px 20px; /* Extra padding at top for timeline */
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
@@ -364,10 +424,16 @@
     
     .graph-container {
       padding: 32px 16px;
+      margin-bottom: 16px;
     }
     
     .bubbles-container {
-      padding-top: 70px; /* More space on mobile for timeline */
+      padding: 120px 16px 16px;
+    }
+    
+    .fab-container {
+      bottom: 32px;
+      right: 32px;
     }
   }
 </style>

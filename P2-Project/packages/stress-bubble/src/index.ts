@@ -6,9 +6,13 @@ export { default as StressBubble } from './lib/StressBubble.svelte';
 export { default as BubbleDetailModal } from './lib/BubbleDetailModal.svelte';
 export { default as Timeline } from './lib/Timeline.svelte';
 
+// Feature #8: Calendar Components
+export { default as CalendarButton } from './lib/CalendarButton.svelte';
+export { default as CalendarDay } from './lib/CalendarDay.svelte';
+export { default as CalendarMonth } from './lib/CalendarMonth.svelte';
+
 // Export types
 export type { Stressor, StressData, BubblePosition } from './types.ts';
-
 
 // Export stores
 export { stressData, currentDate, currentStressors, stressActions } from './lib/stores/stressStore.ts';
