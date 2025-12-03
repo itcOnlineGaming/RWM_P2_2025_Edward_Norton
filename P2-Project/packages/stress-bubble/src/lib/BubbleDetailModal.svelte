@@ -9,6 +9,10 @@
   // Props
   export let stressor: Stressor;
   
+  // Local state for editing notes
+  let isEditingNotes = false;
+  let editedNotes = stressor.notes || '';
+  
   // Color mapping
   const colorMap: Record<number, string> = {
     1: '#9ACD32',
@@ -26,6 +30,9 @@
     index: i
   }));
   
+  // Check if can add more cells
+  $: canAddCell = stressor.level < 5;
+  
   // Task #6: Cell Removal Logic
   function handleRemoveCell(cellIndex: number) {
     if (stressor.level === 1) {
@@ -39,11 +46,35 @@
     dispatch('updateLevel', { id: stressor.id, level: newLevel });
   }
   
+  // Task #6: Add Cell Logic (Increase stress)
+  function handleAddCell() {
+    if (stressor.level >= 5) return; // Max level is 5
+    
+    const newLevel = Math.min(5, stressor.level + 1) as 1 | 2 | 3 | 4 | 5;
+    dispatch('updateLevel', { id: stressor.id, level: newLevel });
+  }
+  
   // Task #6: Delete Stressor Option
   function handleDelete() {
     if (confirm(`Are you sure you want to delete "${stressor.name}"?`)) {
       dispatch('delete', stressor.id);
     }
+  }
+  
+  // Edit notes functionality
+  function startEditingNotes() {
+    isEditingNotes = true;
+    editedNotes = stressor.notes || '';
+  }
+  
+  function saveNotes() {
+    dispatch('updateNotes', { id: stressor.id, notes: editedNotes.trim() || undefined });
+    isEditingNotes = false;
+  }
+  
+  function cancelEditNotes() {
+    isEditingNotes = false;
+    editedNotes = stressor.notes || '';
   }
   
   function handleClose() {
@@ -114,9 +145,11 @@
         <!-- Task #6: Interactive Cell Removal UI -->
         <div class="instruction-text">
           {#if stressor.level === 1}
-            <p>Tap the cell to completely remove this stressor</p>
+            <p>Tap the cell to completely remove this stressor, or add more</p>
+          {:else if stressor.level === 5}
+            <p>Tap cells to reduce stress (Max level reached)</p>
           {:else}
-            <p>Tap cells to reduce your stress level</p>
+            <p>Tap cells to reduce stress, or add more if stress increases</p>
           {/if}
         </div>
         
@@ -134,16 +167,57 @@
               <span class="cell-hover-icon">×</span>
             </button>
           {/each}
+          
+          <!-- Task #6: Add Cell Button -->
+          {#if canAddCell}
+            <button
+              class="add-cell-button"
+              on:click={handleAddCell}
+              type="button"
+              aria-label="Add stress cell"
+              transition:scale={{ duration: 300 }}
+            >
+              <span class="add-icon">+</span>
+            </button>
+          {/if}
         </div>
       </div>
       
       <!-- Notes Section -->
-      {#if stressor.notes}
-        <div class="notes-section">
+      <div class="notes-section">
+        <div class="notes-header">
           <h3>Notes</h3>
-          <p class="notes-text">{stressor.notes}</p>
+          {#if !isEditingNotes}
+            <button class="edit-notes-btn" on:click={startEditingNotes} type="button">
+              ✏️ Edit
+            </button>
+          {/if}
         </div>
-      {/if}
+        
+        {#if isEditingNotes}
+          <div class="notes-edit">
+            <textarea 
+              bind:value={editedNotes}
+              placeholder="Add details about this stressor..."
+              maxlength="500"
+              rows="4"
+              class="notes-textarea"
+            ></textarea>
+            <div class="notes-actions">
+              <button class="btn-small btn-secondary" on:click={cancelEditNotes} type="button">
+                Cancel
+              </button>
+              <button class="btn-small btn-primary-small" on:click={saveNotes} type="button">
+                Save Notes
+              </button>
+            </div>
+          </div>
+        {:else}
+          <p class="notes-text">
+            {stressor.notes || 'No notes added yet. Click edit to add notes.'}
+          </p>
+        {/if}
+      </div>
       
       <!-- Metadata -->
       <div class="metadata-section">
@@ -337,6 +411,40 @@
     opacity: 1;
   }
   
+  /* Task #6: Add Cell Button */
+  .add-cell-button {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 3px dashed #d97642;
+    background: rgba(217, 118, 66, 0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #d97642;
+    font-weight: 700;
+    font-size: 28px;
+  }
+  
+  .add-cell-button:hover {
+    transform: scale(1.1);
+    background: rgba(217, 118, 66, 0.2);
+    border-color: #c85a2d;
+    box-shadow: 0 4px 12px rgba(217, 118, 66, 0.3);
+  }
+  
+  .add-cell-button:active {
+    transform: scale(0.95);
+  }
+  
+  .add-icon {
+    font-size: 32px;
+    line-height: 1;
+  }
+  
   /* Notes Section */
   .notes-section {
     background: rgba(255, 255, 255, 0.6);
@@ -344,11 +452,34 @@
     border-radius: 16px;
   }
   
+  .notes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  
   .notes-section h3 {
-    margin: 0 0 12px 0;
+    margin: 0;
     font-size: 16px;
     font-weight: 600;
     color: #2c2c2c;
+  }
+  
+  .edit-notes-btn {
+    background: none;
+    border: none;
+    color: #d97642;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+  
+  .edit-notes-btn:hover {
+    background: rgba(217, 118, 66, 0.1);
   }
   
   .notes-text {
@@ -357,6 +488,64 @@
     line-height: 1.6;
     color: #5c5c5c;
     white-space: pre-wrap;
+    font-style: italic;
+  }
+  
+  .notes-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .notes-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid rgba(217, 118, 66, 0.2);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    background: white;
+    color: #2c2c2c;
+  }
+  
+  .notes-textarea:focus {
+    outline: none;
+    border-color: #d97642;
+    box-shadow: 0 0 0 3px rgba(217, 118, 66, 0.1);
+  }
+  
+  .notes-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  
+  .btn-small {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+  }
+  
+  .btn-primary-small {
+    background: linear-gradient(135deg, #d97642 0%, #c85a2d 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+  }
+  
+  .btn-primary-small:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(217, 118, 66, 0.3);
   }
   
   /* Metadata Section */
