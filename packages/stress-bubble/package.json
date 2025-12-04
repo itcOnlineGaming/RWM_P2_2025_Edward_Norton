@@ -1,6 +1,6 @@
 {
   "name": "stress-bubble",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Stress bubble graph component for SRL",
   "type": "module",
   "svelte": "./src/index.ts",
@@ -21,10 +21,10 @@
     "srl"
   ],
   "peerDependencies": {
-    "svelte": "^4.0.0"
+    "svelte": "^4.0.0 || ^5.0.0"
   },
   "devDependencies": {
-    "svelte": "^4.2.0",
+    "svelte": "^5.39.5",
     "typescript": "^5.0.0"
   }
 }
