@@ -289,8 +289,10 @@
     font-weight: 700;
     color: #2c2c2c;
     word-wrap: break-word;
+    word-break: break-word; /* FIXED: Break long words */
     flex: 1;
     padding-right: 16px;
+    overflow-wrap: break-word; /* FIXED: Additional word breaking */
   }
   
   .close-button {
@@ -445,11 +447,12 @@
     line-height: 1;
   }
   
-  /* Notes Section */
+  /* Notes Section - FIXED */
   .notes-section {
     background: rgba(255, 255, 255, 0.6);
     padding: 20px;
     border-radius: 16px;
+    overflow: hidden; /* FIXED: Contain overflow */
   }
   
   .notes-header {
@@ -476,19 +479,26 @@
     padding: 4px 8px;
     border-radius: 6px;
     transition: all 0.2s;
+    flex-shrink: 0; /* FIXED: Prevent button shrinking */
   }
   
   .edit-notes-btn:hover {
     background: rgba(217, 118, 66, 0.1);
   }
   
+  /* FIXED: Notes text overflow */
   .notes-text {
     margin: 0;
     font-size: 14px;
     line-height: 1.6;
     color: #5c5c5c;
     white-space: pre-wrap;
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
     font-style: italic;
+    max-width: 100%;
+    overflow: hidden;
   }
   
   .notes-edit {
@@ -497,6 +507,7 @@
     gap: 12px;
   }
   
+  /* FIXED: Textarea sizing */
   .notes-textarea {
     width: 100%;
     padding: 12px;
@@ -507,6 +518,7 @@
     resize: vertical;
     background: white;
     color: #2c2c2c;
+    box-sizing: border-box; /* FIXED: Prevent overflow */
   }
   
   .notes-textarea:focus {

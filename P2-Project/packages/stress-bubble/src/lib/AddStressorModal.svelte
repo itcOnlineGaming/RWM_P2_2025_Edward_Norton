@@ -238,6 +238,7 @@
     transition: all 0.2s;
     background: white;
     color: #2c2c2c;
+    box-sizing: border-box;
   }
   
   input[type="text"]:focus {
@@ -337,6 +338,7 @@
     transition: all 0.2s;
     background: white;
     color: #2c2c2c;
+    box-sizing: border-box;
   }
   
   textarea:focus {
