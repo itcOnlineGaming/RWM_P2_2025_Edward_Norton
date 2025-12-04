@@ -148,16 +148,17 @@
 </div>
 
 <style>
+  /* FIXED: Fully responsive timeline */
   .timeline-compact {
     position: absolute;
     top: 16px;
     left: 16px;
+    right: 16px; /* FIXED: Responsive width */
+    max-width: 360px; /* Max width on desktop */
     background: rgba(254, 245, 238, 0.95);
     border: 2px solid #e8a87c;
     border-radius: 12px;
     padding: 12px 16px;
-    min-width: 320px;
-    max-width: 320px;
     backdrop-filter: blur(10px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     z-index: 10;
@@ -185,6 +186,9 @@
     color: #5c5c5c;
     line-height: 1.4;
     flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   
   .viewing-text strong {
@@ -235,7 +239,7 @@
     align-items: center;
     justify-content: center;
     flex: 1;
-    min-width: 72px; /* Fixed width to prevent resize */
+    min-width: 60px;
   }
   
   .date-text {
@@ -329,10 +333,10 @@
     background: rgba(217, 118, 66, 0.1);
   }
   
+  /* MOBILE RESPONSIVE FIXES */
   @media (max-width: 768px) {
     .timeline-compact {
-      min-width: 280px;
-      max-width: 280px;
+      max-width: calc(100% - 32px); /* Responsive to screen */
       padding: 10px 12px;
     }
     
@@ -345,8 +349,50 @@
     }
     
     .nav-btn {
+      width: 26px;
+      height: 26px;
+    }
+    
+    .nav-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .timeline-compact {
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      max-width: calc(100% - 24px);
+      padding: 8px 10px;
+    }
+    
+    .viewing-display {
+      padding: 6px 10px;
+    }
+    
+    .viewing-text {
+      font-size: 10px;
+    }
+    
+    .calendar-icon {
+      width: 14px;
+      height: 14px;
+    }
+    
+    .date-text {
+      font-size: 12px;
+    }
+    
+    .nav-btn {
       width: 24px;
       height: 24px;
+    }
+    
+    .data-dot {
+      width: 5px;
+      height: 5px;
     }
   }
 </style>

@@ -13,7 +13,7 @@
 </script>
 
 <svelte:head>
-  <title>Stress Bubble Demo</title>
+  <title>Stress Bubble Graph</title>
 </svelte:head>
 
 <div class="page-container">

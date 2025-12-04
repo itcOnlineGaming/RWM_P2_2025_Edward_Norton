@@ -6,9 +6,8 @@
   export let disabled = false;
   
   function handleClick() {
-    if (!disabled) {
-      dispatch('click');
-    }
+    // Always dispatch click - parent will handle showing warning
+    dispatch('click');
   }
 </script>
 
@@ -25,6 +24,7 @@
 </button>
 
 <style>
+  /* FAB positioned absolutely INSIDE parent container */
   .add-stressor-fab {
     position: absolute;
     bottom: 24px;
@@ -41,7 +41,7 @@
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
-    z-index: 10;
+    z-index: 50; /* Higher than bubbles but lower than modals */
   }
   
   .add-stressor-fab:hover:not(.disabled) {
@@ -54,10 +54,17 @@
     transform: scale(0.95);
   }
   
+  /* Disabled state */
   .add-stressor-fab.disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    background: #ccc;
+    background: linear-gradient(135deg, #999 0%, #777 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  
+  .add-stressor-fab.disabled:hover {
+    transform: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
   
   .add-stressor-fab svg {
@@ -67,10 +74,29 @@
   /* Mobile adjustments */
   @media (max-width: 768px) {
     .add-stressor-fab {
-      bottom: 24px;
-      right: 24px;
-      width: 56px;
-      height: 56px;
+      bottom: 20px;
+      right: 20px;
+      width: 52px;
+      height: 52px;
+    }
+    
+    .add-stressor-fab svg {
+      width: 22px;
+      height: 22px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .add-stressor-fab {
+      bottom: 16px;
+      right: 16px;
+      width: 48px;
+      height: 48px;
+    }
+    
+    .add-stressor-fab svg {
+      width: 20px;
+      height: 20px;
     }
   }
 </style>

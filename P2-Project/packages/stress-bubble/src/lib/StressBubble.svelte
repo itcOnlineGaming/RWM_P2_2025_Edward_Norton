@@ -1,14 +1,29 @@
 <script lang="ts">
   // Feature #4: Stress Bubble Component
   // Feature #5: Bubble Cells
-  import { createEventDispatcher } from 'svelte';
-  import { fade, scale } from 'svelte/transition';
+  import { createEventDispatcher, onMount } from 'svelte';
+  import { scale } from 'svelte/transition';
   import type { Stressor } from '../types.ts';
   
   const dispatch = createEventDispatcher();
   
   // Props
   export let stressor: Stressor;
+  
+  // Responsive sizing
+  let isMobile = false;
+  let isSmallMobile = false;
+  
+  onMount(() => {
+    updateDeviceSize();
+    window.addEventListener('resize', updateDeviceSize);
+    return () => window.removeEventListener('resize', updateDeviceSize);
+  });
+  
+  function updateDeviceSize() {
+    isMobile = window.innerWidth <= 768;
+    isSmallMobile = window.innerWidth <= 480;
+  }
   
   // Task #4: Bubble Color Mapping
   const colorMap: Record<number, string> = {
@@ -19,8 +34,8 @@
     5: '#E91E63'  // Deep pink (high stress)
   };
   
-  // Task #4: Bubble Size Calculation
-  const sizeMap: Record<number, number> = {
+  // Task #4: Bubble Size Calculation - RESPONSIVE
+  const desktopSizeMap: Record<number, number> = {
     1: 80,   // 80px diameter
     2: 100,  // 100px diameter
     3: 120,  // 120px diameter
@@ -28,9 +43,29 @@
     5: 160   // 160px diameter
   };
   
+  const mobileSizeMap: Record<number, number> = {
+    1: 70,   // Smaller for mobile
+    2: 85,
+    3: 100,
+    4: 115,
+    5: 130
+  };
+  
+  const smallMobileSizeMap: Record<number, number> = {
+    1: 60,   // Even smaller for small mobile
+    2: 72,
+    3: 84,
+    4: 96,
+    5: 108
+  };
+  
   $: bubbleColor = colorMap[stressor.level];
-  $: bubbleSize = sizeMap[stressor.level];
-  $: cellSize = bubbleSize * 0.22; // Task #5: Cell size is 22% of main bubble (slightly bigger)
+  $: bubbleSize = isSmallMobile 
+    ? smallMobileSizeMap[stressor.level]
+    : isMobile 
+      ? mobileSizeMap[stressor.level]
+      : desktopSizeMap[stressor.level];
+  $: cellSize = bubbleSize * 0.22; // Cell size is 22% of main bubble
   
   // Task #5: Cell Bubble Generation
   $: cells = Array.from({ length: stressor.level }, (_, i) => ({
@@ -53,7 +88,6 @@
     }
     
     // For multiple cells, distribute evenly around a circle
-    // Start from top (-90 degrees) and distribute evenly
     const baseAngle = -Math.PI / 2; // Start from top
     const angleStep = (2 * Math.PI) / total; // Evenly distribute
     const angle = baseAngle + (index * angleStep);
@@ -86,6 +120,10 @@
     event.stopPropagation(); // Don't trigger bubble click
     dispatch('removeCell', { stressorId: stressor.id, cellIndex });
   }
+  
+  // Responsive font sizes
+  $: fontSize = isSmallMobile ? 12 : isMobile ? 13 : 14;
+  $: levelFontSize = isSmallMobile ? 10 : isMobile ? 10 : 11;
 </script>
 
 <!-- Task #4: Bubble Visual Design -->
@@ -128,8 +166,8 @@
   
   <!-- Stressor Label -->
   <div class="bubble-label">
-    <span class="bubble-name">{stressor.name}</span>
-    <span class="bubble-level">Lv {stressor.level}</span>
+    <span class="bubble-name" style="font-size: {fontSize}px">{stressor.name}</span>
+    <span class="bubble-level" style="font-size: {levelFontSize}px">Lv {stressor.level}</span>
   </div>
 </div>
 
@@ -147,6 +185,7 @@
     text-align: center;
     padding: 12px;
     border: 2px solid rgba(255, 255, 255, 0.3);
+    flex-shrink: 0; /* Prevent shrinking */
   }
   
   /* Task #4: Bubble Click Interaction - Hover Effect */
@@ -166,19 +205,22 @@
     flex-direction: column;
     gap: 4px;
     pointer-events: none;
+    max-width: 90%;
   }
   
   .bubble-name {
     font-weight: 700;
-    font-size: 14px;
     color: white;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     word-wrap: break-word;
-    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
   
   .bubble-level {
-    font-size: 11px;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.9);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -219,12 +261,32 @@
   
   /* Mobile touch optimization */
   @media (max-width: 768px) {
+    .stress-bubble {
+      padding: 10px;
+    }
+    
     .cell-remove-icon {
       opacity: 0.5;
+      font-size: 12px;
     }
     
     .cell-bubble:active .cell-remove-icon {
       opacity: 1;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .stress-bubble {
+      padding: 8px;
+      border-width: 1.5px;
+    }
+    
+    .bubble-label {
+      gap: 2px;
+    }
+    
+    .cell-remove-icon {
+      font-size: 11px;
     }
   }
 </style>

@@ -21,6 +21,10 @@
   let selectedStressor: Stressor | null = null;
   let showCalendar = false;
   let isLoading = false;
+  let showMaxWarning = false;
+  
+  // Constants
+  const MAX_STRESSORS_PER_DAY = 5;
   
   // Subscribe to stores
   let stressData: StressData;
@@ -37,6 +41,7 @@
   // Computed
   $: currentStressors = stressData[currentDate] || [];
   $: isEmpty = currentStressors.length === 0;
+  $: isAtMaxCapacity = currentStressors.length >= MAX_STRESSORS_PER_DAY;
   
   onMount(() => {
     loadStressData();
@@ -161,6 +166,10 @@
   
   // Show/Hide Add Modal
   function openAddModal() {
+    if (isAtMaxCapacity) {
+      showMaxWarning = true;
+      return;
+    }
     showAddModal = true;
   }
   
@@ -223,6 +232,21 @@
         on:openCalendar={openCalendar}
       />
       
+      <!-- Max Stressors Warning Modal -->
+      {#if showMaxWarning}
+        <div class="warning-modal-overlay" on:click={() => showMaxWarning = false}>
+          <div class="warning-modal" on:click|stopPropagation>
+            <div class="warning-icon">⚠️</div>
+            <h3>Maximum Stressors Reached</h3>
+            <p>You can only track up to 5 stressors per day.</p>
+            <p>Please remove an existing stressor to add a new one.</p>
+            <button class="btn-warning-ok" on:click={() => showMaxWarning = false} type="button">
+              Got it
+            </button>
+          </div>
+        </div>
+      {/if}
+      
       {#if isLoading}
         <div class="loading-state">
           <div class="spinner"></div>
@@ -245,14 +269,15 @@
           {/each}
         </div>
       {/if}
+      
+      <!-- FAB MOVED INSIDE GRAPH CONTAINER -->
+      {#if !showAddModal && !selectedStressor && !showCalendar}
+        <AddStressorButton 
+          disabled={isAtMaxCapacity}
+          on:click={openAddModal} 
+        />
+      {/if}
     </div>
-
-    <!-- Feature 3: Add Button (FAB) - Positioned relative to graph container -->
-    {#if !showAddModal && !selectedStressor && !showCalendar}
-      <div class="fab-container">
-        <AddStressorButton on:click={openAddModal} />
-      </div>
-    {/if}
     
     <!-- Feature 4: Add Stressor Modal -->
     {#if showAddModal}
@@ -329,7 +354,7 @@
     box-sizing: border-box;
   }
   
-  /* Graph Container */
+  /* Graph Container - FIXED: Contains FAB inside */
   .graph-container {
     position: relative;
     flex: 1;
@@ -337,18 +362,77 @@
     border: 3px solid #e8a87c;
     border-radius: 20px;
     padding: 40px 20px;
-    min-height: 500px;
+    min-height: 600px; /* Increased min-height */
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-    overflow: visible;
+    overflow: hidden; /* Changed from visible to hidden to contain FAB */
     margin-bottom: 20px;
   }
   
-  /* FAB Container */
-  .fab-container {
-    position: absolute;
-    bottom: 40px;
-    right: 40px;
-    z-index: 100;
+  /* Warning Modal */
+  .warning-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+  }
+  
+  .warning-modal {
+    background: linear-gradient(180deg, #fff5f0 0%, #ffe6dc 100%);
+    border: 3px solid #ff8c42;
+    border-radius: 20px;
+    padding: 32px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  }
+  
+  .warning-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+  
+  .warning-modal h3 {
+    margin: 0 0 16px 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: #d97642;
+  }
+  
+  .warning-modal p {
+    margin: 0 0 12px 0;
+    font-size: 15px;
+    color: #5c5c5c;
+    line-height: 1.6;
+  }
+  
+  .warning-modal p:last-of-type {
+    margin-bottom: 24px;
+  }
+  
+  .btn-warning-ok {
+    background: linear-gradient(135deg, #d97642 0%, #c85a2d 100%);
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(217, 118, 66, 0.3);
+  }
+  
+  .btn-warning-ok:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(217, 118, 66, 0.4);
   }
   
   /* Empty State */
@@ -400,40 +484,67 @@
     100% { transform: rotate(360deg); }
   }
   
-  /* Bubbles Container */
+  /* Bubbles Container - FIXED: Better centering and spacing */
   .bubbles-container {
     width: 100%;
     height: 100%;
-    padding: 100px 20px 20px; /* Extra padding at top for timeline */
+    padding: 140px 20px 100px; /* More top padding for timeline, more bottom for FAB */
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
     justify-content: center;
-    align-content: flex-start;
+    align-content: center;
+    min-height: 500px;
   }
   
-  /* Responsive */
+  /* Responsive - MOBILE FIXES */
   @media (max-width: 768px) {
-    .stress-bubble-graph {
-      min-height: 100vh;
+    .header h1 {
+      font-size: 24px;
     }
     
-    .header h1 {
-      font-size: 28px;
+    .header p {
+      font-size: 14px;
+    }
+    
+    .main-container {
+      padding: 0 12px 24px;
     }
     
     .graph-container {
-      padding: 32px 16px;
+      padding: 24px 12px;
+      min-height: calc(100vh - 200px);
       margin-bottom: 16px;
     }
     
     .bubbles-container {
-      padding: 120px 16px 16px;
+      padding: 180px 12px 100px; /* More padding on mobile for timeline */
+      gap: 16px;
+    }
+  }
+  
+  /* Extra small devices */
+  @media (max-width: 480px) {
+    .header {
+      padding: 24px 16px 16px;
     }
     
-    .fab-container {
-      bottom: 32px;
-      right: 32px;
+    .header h1 {
+      font-size: 22px;
+    }
+    
+    .header p {
+      font-size: 13px;
+    }
+    
+    .graph-container {
+      padding: 20px 10px;
+      border-radius: 16px;
+    }
+    
+    .bubbles-container {
+      padding: 200px 8px 100px;
+      gap: 12px;
     }
   }
 </style>
