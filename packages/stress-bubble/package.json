@@ -1,6 +1,6 @@
 {
   "name": "stress-bubble",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Stress bubble graph component for SRL",
   "type": "module",
   "svelte": "./src/index.ts",

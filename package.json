@@ -21,7 +21,6 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "stress-bubble": "workspace:*"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.3",
