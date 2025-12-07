@@ -7,7 +7,7 @@ export { default as Timeline } from './lib/Timeline.svelte';
 export { default as CalendarButton } from './lib/CalendarButton.svelte';
 export { default as CalendarDay } from './lib/CalendarDay.svelte';
 export { default as CalendarMonth } from './lib/CalendarMonth.svelte';
-export type { Stressor, StressData, BubblePosition } from './types.ts';
-export { stressData, currentDate, currentStressors, stressActions } from './lib/stores/stressStore.ts';
+export type { Stressor, StressData, BubblePosition } from './types.js';
+export { stressData, currentDate, currentStressors, stressActions } from './lib/stores/stressStore.js';
 export { default } from './lib/StressBubbleGraph.svelte';
 //# sourceMappingURL=index.d.ts.map

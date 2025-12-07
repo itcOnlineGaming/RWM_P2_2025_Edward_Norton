@@ -10,6 +10,6 @@ export { default as CalendarButton } from './lib/CalendarButton.svelte';
 export { default as CalendarDay } from './lib/CalendarDay.svelte';
 export { default as CalendarMonth } from './lib/CalendarMonth.svelte';
 // Export stores
-export { stressData, currentDate, currentStressors, stressActions } from './lib/stores/stressStore.ts';
+export { stressData, currentDate, currentStressors, stressActions } from './lib/stores/stressStore.js';
 // Default export for convenience
 export { default } from './lib/StressBubbleGraph.svelte';
