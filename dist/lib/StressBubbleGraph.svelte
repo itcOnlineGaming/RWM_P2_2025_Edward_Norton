@@ -3,14 +3,14 @@
   // Feature #7: Compact Timeline Navigation (Top-Left)
   // Feature #8: Calendar Modal
   import { onMount } from 'svelte';
-  import { stressData as stressDataStore, currentDate as currentDateStore, stressActions } from './stores/stressStore.ts';
+  import { stressData as stressDataStore, currentDate as currentDateStore, stressActions } from './stores/stressStore';
   import AddStressorButton from './AddStressorButton.svelte';
   import AddStressorModal from './AddStressorModal.svelte';
   import StressBubble from './StressBubble.svelte';
   import BubbleDetailModal from './BubbleDetailModal.svelte';
   import Timeline from './Timeline.svelte';
   import CalendarMonth from './CalendarMonth.svelte';
-  import type { Stressor, StressData } from '../types.ts';
+  import type { Stressor, StressData } from '../types';
   
   // Props
   export let userId: string | null = null; // For authenticated users
