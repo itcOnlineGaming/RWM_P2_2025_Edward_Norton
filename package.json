@@ -3,9 +3,6 @@
   "version": "0.2.3",
   "description": "Stress bubble graph component for SRL",
   "type": "module",
-  "scripts": {
-    "package": "svelte-package -o dist"
-  },
   "exports": {
     ".": {
       "types": "./index.d.ts",
@@ -13,24 +10,9 @@
       "default": "./index.js"
     }
   },
-  "files": [
-    "."
-  ],
   "svelte": "./index.js",
   "types": "./index.d.ts",
-  "keywords": [
-    "svelte",
-    "stress-tracking",
-    "visualization",
-    "srl"
-  ],
   "peerDependencies": {
     "svelte": "^4.0.0 || ^5.0.0"
-  },
-  "devDependencies": {
-    "@sveltejs/package": "^2.0.0",
-    "@sveltejs/vite-plugin-svelte": "^6.0.0",
-    "svelte": "^5.39.5",
-    "typescript": "^5.0.0"
   }
 }
